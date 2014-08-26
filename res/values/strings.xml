@@ -1,0 +1,7 @@
+<resources>
+
+    <string name="app_name">NetworkDemo</string>
+    <string name="button_send">Send</string>
+    <string name="button_connect">Connect</string>
+
+</resources>
