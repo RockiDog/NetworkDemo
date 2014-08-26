@@ -1,4 +1,4 @@
 NetworkDemo
 ===========
 
-Android socket progarmming demo
+Android socket programming demo
