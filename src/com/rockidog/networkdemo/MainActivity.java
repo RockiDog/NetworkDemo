@@ -2,8 +2,8 @@ package com.rockidog.networkdemo;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -13,75 +13,88 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 public class MainActivity extends Activity {
-    private Socket socket = null;
-    private OutputStream outputStream = null;
-    private byte[] buffer = null;
-    private String ip = null;
-
+    private Socket mSocket = null;
+    private OutputStream mOutputStream = null;
+    private byte[] mBuffer = null;
+    private String mIP = null;
+    private Toast mToast = null;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        if (android.os.Build.VERSION.SDK_INT > 9) {
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-        }
     }
-
+    
     public void onConnectClick(View view) {
         EditText ipText = (EditText) findViewById(R.id.ipText);
-        ip = ipText.getText().toString();
-        
-        try {
-            socket = new Socket(ip, 7000);
-            if (true == socket.isConnected()) {
-                Context context = getApplicationContext();
-                String text = new String("Connection established!");
-                Toast toast = Toast.makeText(context, text, Toast.LENGTH_SHORT);
-                toast.show();
-            }
-        }
-        catch (IOException e) {
-            System.out.println(e.toString());
-        }
+        mIP = ipText.getText().toString();
+        new ConnectTask().execute(mIP);
     }
-
+    
     public void onSendClick(View view) {
         EditText contentText = (EditText) findViewById(R.id.contentText);
         String content = contentText.getText().toString();
-        
-        if (null != socket) {
+        if (null == mSocket || true == mSocket.isClosed()) {
+            if (null == mIP) {
+                EditText ipText = (EditText) findViewById(R.id.ipText);
+                mIP = ipText.getText().toString();
+            }
+            new ConnectTask().execute(mIP);
+        }
+        new SendTask().execute(content);
+    }
+    
+    private class ConnectTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... IPs) {
+            if (0 == IPs[0].length())
+                return new String("请输入服务器地址！");
+            
             try {
-                outputStream = socket.getOutputStream();
-                buffer = content.getBytes();
-                outputStream.write(buffer);
-                outputStream.close();
+                mSocket = new Socket(IPs[0], 7000);
+                if (true == mSocket.isConnected())
+                    return new String ("连接成功！");
+                else
+                    return new String ("连接失败！");
+            }
+            catch (IOException e) {
+                System.out.println(e.toString());
+                return new String ("程序异常！");
+            }
+        }
+        
+        @Override
+        protected void onPostExecute(String message) {
+            Context context = getApplicationContext();
+            mToast = Toast.makeText(context, message, Toast.LENGTH_SHORT);
+            mToast.show();
+        }
+    }
+    
+    private class SendTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... message) {
+            try {
+                mOutputStream = mSocket.getOutputStream();
+                mBuffer = message[0].getBytes();
+                mOutputStream.write(mBuffer);
+                mOutputStream.close();
             }
             catch (IOException e) {
                 System.out.println(e.toString());
             }
-        }
-        else {
-            if (null != ip) {
-                try {
-                    socket = new Socket(ip, 7000);
-                    outputStream = socket.getOutputStream();
-                    buffer = content.getBytes();
-                    outputStream.write(buffer);
-                    outputStream.close();
-                }
-                catch (IOException e) {
-                    System.out.println(e.toString());
+            finally {
+                if (null != mSocket) {
+                    try {
+                        mSocket.close();
+                    }
+                    catch (IOException e) {
+                        System.out.println(e.toString());
+                    }
                 }
             }
-            else {
-                Context context = getApplicationContext();
-                String text = new String("No connection established!");
-                Toast toast = Toast.makeText(context, text, Toast.LENGTH_SHORT);
-                toast.show();
-            }
+            return null;
         }
-        
-        socket = null;
     }
 }
+
