@@ -78,6 +78,7 @@ public class MainActivity extends Activity {
                 mOutputStream = mSocket.getOutputStream();
                 mBuffer = message[0].getBytes();
                 mOutputStream.write(mBuffer);
+                mOutputStream.flush();
                 mOutputStream.close();
             }
             catch (IOException e) {
