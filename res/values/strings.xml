@@ -1,7 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">NetworkDemo</string>
-    <string name="button_send">Send</string>
-    <string name="button_connect">Connect</string>
+    <string name="app_name">机器人遥控器</string>
+    <string name="button_connect">连接</string>
+    <string name="button_send">发送</string>
+    <string name="button_start">开始</string>
+    <string name="title_activity_panel">控制面板</string>
 
 </resources>

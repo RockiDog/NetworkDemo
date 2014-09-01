@@ -2,6 +2,7 @@ package com.rockidog.networkdemo;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
@@ -11,39 +12,37 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 public class MainActivity extends Activity {
-    private Socket mSocket = null;
-    private OutputStream mOutputStream = null;
-    private byte[] mBuffer = null;
-    private String mIP = null;
-    private Toast mToast = null;
-    
+    public static Socket mSocket = null;
+    public static String mIP = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
-    
+
     public void onConnectClick(View view) {
         EditText ipText = (EditText) findViewById(R.id.ipText);
         mIP = ipText.getText().toString();
         new ConnectTask().execute(mIP);
     }
-    
+
     public void onSendClick(View view) {
         EditText contentText = (EditText) findViewById(R.id.contentText);
         String content = contentText.getText().toString();
-        if (null == mSocket || true == mSocket.isClosed()) {
-            if (null == mIP) {
-                EditText ipText = (EditText) findViewById(R.id.ipText);
-                mIP = ipText.getText().toString();
-            }
-            new ConnectTask().execute(mIP);
-        }
         new SendTask().execute(content);
     }
-    
+
+    public void onStartClick(View view) {
+        Intent intent = new Intent(this, PanelActivity.class);
+        PanelActivity.mIP = MainActivity.mIP;
+        PanelActivity.mSocket = MainActivity.mSocket;
+        startActivity(intent);
+    }
+
     private class ConnectTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... IPs) {
@@ -52,46 +51,41 @@ public class MainActivity extends Activity {
             
             try {
                 mSocket = new Socket(IPs[0], 7000);
-                if (true == mSocket.isConnected())
-                    return new String ("连接成功！");
-                else
-                    return new String ("连接失败！");
+            }
+            catch (UnknownHostException e) {
+                return new String("请输入合法的IP地址！");
             }
             catch (IOException e) {
-                System.out.println(e.toString());
-                return new String ("程序异常！");
+                return new String("连接失败，IP不正确或服务端未开启！");
             }
+            
+            return new String("连接成功！");
         }
         
         @Override
         protected void onPostExecute(String message) {
             Context context = getApplicationContext();
-            mToast = Toast.makeText(context, message, Toast.LENGTH_SHORT);
-            mToast.show();
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
         }
     }
-    
+
     private class SendTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... message) {
             try {
-                mOutputStream = mSocket.getOutputStream();
-                mBuffer = message[0].getBytes();
+                OutputStream mOutputStream = mSocket.getOutputStream();
+                byte[] mBuffer = message[0].getBytes();
                 mOutputStream.write(mBuffer);
                 mOutputStream.flush();
-                mOutputStream.close();
             }
             catch (IOException e) {
-                System.out.println(e.toString());
-            }
-            finally {
-                if (null != mSocket) {
-                    try {
-                        mSocket.close();
-                    }
-                    catch (IOException e) {
-                        System.out.println(e.toString());
-                    }
+                System.out.println(e.getMessage());
+                try {
+                    mSocket = new Socket(mIP, 7000);
+                }
+                catch (IOException socketException)
+                {
+                    System.out.println(socketException.getMessage());
                 }
             }
             return null;

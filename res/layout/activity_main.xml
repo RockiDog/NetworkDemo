@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:layout_height="match_parent" >
 
     <EditText
         android:id="@+id/ipText"
@@ -12,6 +11,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginLeft="18dp"
         android:layout_marginTop="20dp"
+        android:text="192.168.2.102"
         android:inputType="text"
         android:ems="10" />
 
@@ -47,5 +47,14 @@
         android:layout_toRightOf="@+id/contentText"
         android:text="@string/button_send"
         android:onClick="onSendClick" />
+
+    <Button
+        android:id="@+id/startBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:text="@string/button_start"
+        android:onClick="onStartClick" />
 
 </RelativeLayout>
