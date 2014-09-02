@@ -93,23 +93,22 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
             case (MotionEvent.ACTION_DOWN):
                 if (distanceToCenter > mJoystickWheelRadius)
                     return false;
-                return true;
+                break;
             case (MotionEvent.ACTION_MOVE):
                 if (distanceToCenter > mJoystickWheelRadius)
                     mJoystickPosition = Graphics.borderPoint(new PointF(x, y), mInitJoystickPosition, mJoystickWheelRadius);
                 else
                     mJoystickPosition.set(x, y);
-                if (null != mJoystickListener) {
-                    Graphics.Vector v = new Graphics.Vector(mInitJoystickPosition, mJoystickPosition);
-                    mJoystickListener.onJoystickPositionChanged(v.dir(), v.mod() / mJoystickWheelRadius * 100);
-                }
-                return true;
+                break;
             case (MotionEvent.ACTION_UP):
                 mJoystickPosition.set(mInitJoystickPosition.x, mInitJoystickPosition.y);
-                return true;
-            default:
-                return false;
+                break;
         }
+        if (null != mJoystickListener) {
+            Graphics.Vector v = new Graphics.Vector(mInitJoystickPosition, mJoystickPosition);
+            mJoystickListener.onJoystickPositionChanged(v.dir(), v.mod() / mJoystickWheelRadius * 100);
+        }
+        return true;
     }
 
     public interface JoystickListener {
