@@ -45,7 +45,11 @@ public class Graphics{
         public void setEndPoint(PointF end) { endPoint = end; }
         
         public float dir() {
-            return (float) Math.atan2(endPoint.y - startPoint.y, endPoint.x - startPoint.x);
+            float radian = (float) Math.atan2(endPoint.y - startPoint.y, endPoint.x - startPoint.x);
+            radian = (float) (Math.PI / 2 + radian);
+            if (0 > radian)
+                radian += (Math.PI * 2);
+            return radian;
         }
         
         public float mod() {

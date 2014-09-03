@@ -106,7 +106,7 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
         }
         if (null != mJoystickListener) {
             Graphics.Vector v = new Graphics.Vector(mInitJoystickPosition, mJoystickPosition);
-            mJoystickListener.onJoystickPositionChanged(v.dir(), v.mod() / mJoystickWheelRadius * 100);
+            mJoystickListener.onJoystickPositionChanged(v.dir() * 10000, v.mod() / mJoystickWheelRadius * 100);
         }
         return true;
     }

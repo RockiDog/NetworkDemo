@@ -22,10 +22,7 @@ public class PanelActivity extends Activity {
         mPanelView.setJoystickListener(new JoystickListener() {
             @Override
             public void onJoystickPositionChanged(float radian, float speed) {
-                int angle = (int) ((-radian / Math.PI) * 180);
-                if (0 > angle)
-                    angle += 360;
-                new SendTask().execute(Integer.toString(angle), Integer.toString((int) speed));
+                new SendTask().execute(Integer.toString((int) radian), Integer.toString((int) speed));
             }
         });
         setContentView(mPanelView);
