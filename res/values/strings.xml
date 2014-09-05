@@ -6,5 +6,6 @@
     <string name="button_send">发送</string>
     <string name="button_start">开始</string>
     <string name="title_activity_panel">控制面板</string>
+    <string name="init_ip">192.168.2.102</string>
 
 </resources>

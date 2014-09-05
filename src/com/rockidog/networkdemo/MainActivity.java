@@ -21,6 +21,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mIP = getString(R.string.init_ip);
         setContentView(R.layout.activity_main);
     }
 
@@ -79,13 +80,13 @@ public class MainActivity extends Activity {
                 mOutputStream.flush();
             }
             catch (IOException e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace();
                 try {
                     mSocket = new Socket(mIP, 7000);
                 }
                 catch (IOException socketException)
                 {
-                    System.out.println(socketException.getMessage());
+                    socketException.printStackTrace();
                 }
             }
             return null;

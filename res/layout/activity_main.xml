@@ -11,7 +11,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginLeft="18dp"
         android:layout_marginTop="20dp"
-        android:text="192.168.2.102"
+        android:text="@string/init_ip"
         android:inputType="text"
         android:ems="10" />
 

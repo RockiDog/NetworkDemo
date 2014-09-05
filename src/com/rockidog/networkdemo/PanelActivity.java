@@ -9,6 +9,7 @@ import android.os.Bundle;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.NullPointerException;
 import java.net.Socket;
 
 public class PanelActivity extends Activity {
@@ -21,8 +22,8 @@ public class PanelActivity extends Activity {
         PanelView mPanelView = new PanelView(this);
         mPanelView.setJoystickListener(new JoystickListener() {
             @Override
-            public void onJoystickPositionChanged(float radian, float speed) {
-                new SendTask().execute(Integer.toString((int) radian), Integer.toString((int) speed));
+            public void onJoystickPositionChanged(int joystick, float radian, float speed) {
+                new SendTask().execute(Integer.toString(joystick), Integer.toString((int) radian), Integer.toString((int) speed));
             }
         });
         setContentView(mPanelView);
@@ -33,19 +34,29 @@ public class PanelActivity extends Activity {
         protected String doInBackground(String... message) {
             try {
                 OutputStream mOutputStream = mSocket.getOutputStream();
-                String buffer = "$" + message[0] + "_" + message[1] + "#";
+                String buffer = "N" + message[0] + "D" + message[1] + "S" + message[2] + "#";
                 byte[] mBuffer = buffer.getBytes();
                 mOutputStream.write(mBuffer);
                 mOutputStream.flush();
             }
             catch (IOException e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace();
                 try {
                     mSocket = new Socket(mIP, 7000);
                 }
                 catch (IOException socketException)
                 {
-                    System.out.println(socketException.getMessage());
+                    e.printStackTrace();
+                }
+            }
+            catch (NullPointerException e) {
+                e.printStackTrace();
+                try {
+                    mSocket = new Socket(mIP, 7000);
+                }
+                catch (IOException socketException)
+                {
+                    e.printStackTrace();
                 }
             }
             return null;

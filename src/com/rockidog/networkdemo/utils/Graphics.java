@@ -7,6 +7,10 @@ public class Graphics{
         return (float) Math.sqrt(Math.pow(start.x - end.x, 2) + Math.pow(start.y - end.y, 2));
     }
 
+    public static float distance(float startX, float startY, float endX, float endY) {
+        return (float) Math.sqrt(Math.pow(startX - endX, 2) + Math.pow(startY - endY, 2));
+    }
+
     public static PointF borderPoint(PointF outer, PointF center, float radius) {
         float length = distance(center, outer);
         float borderX = center.x + (outer.x - center.x) * (radius / length);
