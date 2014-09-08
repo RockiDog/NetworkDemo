@@ -11,6 +11,22 @@ public class Graphics{
         return (float) Math.sqrt(Math.pow(startX - endX, 2) + Math.pow(startY - endY, 2));
     }
 
+    public static float distanceX(PointF start, PointF end) {
+        return Math.abs(end.x - start.x);
+    }
+    
+    public static float distanceX(float startX, float endX) {
+        return Math.abs(endX - startX);
+    }
+
+    public static float distanceY(PointF start, PointF end) {
+        return Math.abs(end.y - start.y);
+    }
+    
+    public static float distanceY(float startY, float endY) {
+        return Math.abs(endY - startY);
+    }
+
     public static PointF borderPoint(PointF outer, PointF center, float radius) {
         float length = distance(center, outer);
         float borderX = center.x + (outer.x - center.x) * (radius / length);
@@ -58,6 +74,14 @@ public class Graphics{
         
         public float mod() {
             return distance(startPoint, endPoint);
+        }
+        
+        public float modX() {
+            return distanceX(startPoint, endPoint);
+        }
+        
+        public float modY() {
+            return distanceY(startPoint, endPoint);
         }
         
         public Vector add(Vector other) {
