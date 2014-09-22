@@ -43,9 +43,11 @@ public class PanelActivity extends Activity {
         setContentView(mPanelView);
     }
 
-    private class SendTask extends AsyncTask<String, Void, String> {
+    private class SendTask extends AsyncTask<String, Void, Void> {
         @Override
-        protected String doInBackground(String... message) {
+        protected Void doInBackground(String... message) {
+            String buffer = null;
+            
             try {
                 mLocalAddress = InetAddress.getByName("255.255.255.255");
                 mDatagramSocket = new DatagramSocket();
@@ -57,7 +59,11 @@ public class PanelActivity extends Activity {
                 u.printStackTrace();
             }
             
-            String buffer;
+            // N: Number of joystick (0: Left, 1: Right)
+            // D: Direction in angle (by 0.01 degree, [0, 36000])
+            // S: Speed of vehicle in percent ([0, 100])
+            // B: Button (0: shooting button, 1: dribbling button)
+            // P: Power in percent ([0, 100])
             if (3 == message.length)
                 buffer = "N" + message[0] + "D" + message[1] + "S" + message[2] + "#";
             else

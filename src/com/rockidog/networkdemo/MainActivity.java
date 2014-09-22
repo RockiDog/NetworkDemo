@@ -40,7 +40,7 @@ public class MainActivity extends Activity {
     public void onStartClick(View view) {
         Intent intent = new Intent(this, PanelActivity.class);
         PanelActivity.mIP = MainActivity.mIP;
-        PanelActivity.mSocket = MainActivity.mSocket;
+        //PanelActivity.mSocket = MainActivity.mSocket;
         startActivity(intent);
     }
 

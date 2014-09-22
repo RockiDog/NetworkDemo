@@ -225,6 +225,13 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
         mActivePointerId = event.getPointerId(pointerIndex);
         
         switch (event.getActionMasked()) {
+            
+            // Frist finger pressing down
+            // 1. Reset the state of the control component activated
+            // 2. Set the joystick position if a joystick is activated
+            // 3. Do not send joystick messages till the first moving action(Prevent touching by mistake)
+            // 4. Start to count the pressed time if a button is pressed
+            // 5. Joysticks disabled till the first moving action
             case MotionEvent.ACTION_DOWN: {
                 if (mJoystickWheelRadius >= distanceToLeft) {
                     mJoystickIdL = mActivePointerId;
@@ -255,6 +262,13 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                 break;
             }
             
+            // Second finger pressing down
+            // 1. Reset the state of the second control component activated
+            // 2. Set the joystick position if another joystick is activated
+            // 3. Do not send joystick messages till the first moving action(Prevent touching by mistake)
+            // 4. Two joysticks can be activated simultaneously
+            // 5. Restart to count the pressed time if another button is pressed
+            // 6. There is no way that two buttons are pressed simultaneously
             case MotionEvent.ACTION_POINTER_DOWN: {
                 if (mJoystickWheelRadius >= distanceToLeft) {
                     if (INVALID_JOYSTICK_ID == mJoystickIdL) {
@@ -289,6 +303,9 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                 break;
             }
             
+            // Finger moving on the screen
+            // 1. Google did not handle the case of multi-movement so we have to traverse the moving pointers(Is this a bug?)
+            // 2. Unlock the moving joystick(s) to send position message(s)
             case MotionEvent.ACTION_MOVE: {
                 int pointerCount = event.getPointerCount();
                 for (pointerIndex = 0; pointerCount != pointerIndex; ++pointerIndex) {
@@ -326,6 +343,8 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                 break;
             }
             
+            // Penultimate finger released
+            // Disable the released control component
             case MotionEvent.ACTION_POINTER_UP: {
                 if (mActivePointerId == mJoystickIdL) {
                     mJoystickIdL = INVALID_JOYSTICK_ID;
@@ -343,6 +362,8 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                 break;
             }
             
+            // Last finger released
+            // Disable the released control component
             case MotionEvent.ACTION_UP: {
                 if (mActivePointerId == mJoystickIdL) {
                     mJoystickIdL = INVALID_JOYSTICK_ID;
@@ -361,6 +382,7 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
             }
         }
         
+        // Send the messages through socket
         if (null != mActionListener) {
             if (false == isJoystickLocked) {
                 Graphics.Vector v;
