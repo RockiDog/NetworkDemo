@@ -7,14 +7,23 @@ import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 
+//import java.io.OutputStream;
+//import java.lang.NullPointerException;
+//import java.net.Socket;
+
 import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.NullPointerException;
-import java.net.Socket;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
 public class PanelActivity extends Activity {
-    public static Socket mSocket = null;
+    //public static Socket mSocket = null;
     public static String mIP = null;
+    public static DatagramSocket mDatagramSocket = null;
+    public static InetAddress mLocalAddress = null;
+    public static int mPort;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +47,35 @@ public class PanelActivity extends Activity {
         @Override
         protected String doInBackground(String... message) {
             try {
+                mLocalAddress = InetAddress.getByName("255.255.255.255");
+                mDatagramSocket = new DatagramSocket();
+            }
+            catch (SocketException s) {
+                s.printStackTrace();
+            }
+            catch (UnknownHostException u) {
+                u.printStackTrace();
+            }
+            
+            String buffer;
+            if (3 == message.length)
+                buffer = "N" + message[0] + "D" + message[1] + "S" + message[2] + "#";
+            else
+                buffer = "B" + message[0] + "P" + message[1] + "#";
+            byte[] mBuffer = buffer.getBytes();
+            mPort = 7001;
+            DatagramPacket mData = new DatagramPacket(mBuffer, buffer.length(), mLocalAddress, mPort);
+            
+            try {
+                mDatagramSocket.send(mData);
+                mDatagramSocket.close();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+            /*
+            try {
                 OutputStream mOutputStream = mSocket.getOutputStream();
                 String buffer;
                 if (3 == message.length)
@@ -53,9 +91,8 @@ public class PanelActivity extends Activity {
                 try {
                     mSocket = new Socket(mIP, 7000);
                 }
-                catch (IOException socketException)
-                {
-                    e.printStackTrace();
+                catch (IOException s) {
+                    s.printStackTrace();
                 }
             }
             catch (NullPointerException e) {
@@ -63,12 +100,12 @@ public class PanelActivity extends Activity {
                 try {
                     mSocket = new Socket(mIP, 7000);
                 }
-                catch (IOException socketException)
-                {
+                catch (IOException socketException) {
                     e.printStackTrace();
                 }
             }
             return null;
+            */
         }
     }
 }
