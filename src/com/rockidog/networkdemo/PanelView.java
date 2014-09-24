@@ -42,7 +42,6 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
     private int mJoystickIdR = INVALID_JOYSTICK_ID;
     private int mActivePointerId = INVALID_POINTER_ID;
     private int mButtonPressedId = INVALID_BUTTON_ID;
-    private int mJoystick = ActionListener.INVALID;
     private int mButton = ActionListener.INVALID;
     private ActionListener mActionListener = null;
     private long mButtonPressedTime = 0;
@@ -235,13 +234,11 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
             case MotionEvent.ACTION_DOWN: {
                 if (mJoystickWheelRadius >= distanceToLeft) {
                     mJoystickIdL = mActivePointerId;
-                    mJoystick = ActionListener.LEFT;
                     isJoystickLocked = true;
                     mJoystickPositionL.set(x, y);
                 }
                 else if (mJoystickWheelRadius >= distanceToRight) {
                     mJoystickIdR = mActivePointerId;
-                    mJoystick = ActionListener.RIGHT;
                     isJoystickLocked = true;
                     mJoystickPositionR.set(x, mInitJoystickPositionR.y);
                 }
@@ -273,7 +270,6 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                 if (mJoystickWheelRadius >= distanceToLeft) {
                     if (INVALID_JOYSTICK_ID == mJoystickIdL) {
                         mJoystickIdL = mActivePointerId;
-                        mJoystick = ActionListener.LEFT;
                         isJoystickLocked = true;
                         mJoystickPositionL.set(x, y);
                     }
@@ -281,7 +277,6 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                 else if (mJoystickWheelRadius >= distanceToRight) {
                     if (INVALID_JOYSTICK_ID == mJoystickIdR) {
                         mJoystickIdR = mActivePointerId;
-                        mJoystick = ActionListener.RIGHT;
                         isJoystickLocked = true;
                         mJoystickPositionR.set(x, mInitJoystickPositionR.y);
                     }
@@ -318,7 +313,6 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                     mActivePointerId = event.getPointerId(pointerIndex);
                     
                     if (mActivePointerId == mJoystickIdL) {
-                        mJoystick = ActionListener.LEFT;
                         isJoystickLocked = false;
                         if (mJoystickWheelRadius < distanceToLeft)
                             mJoystickPositionL = Graphics.borderPoint(new PointF(x, y), mInitJoystickPositionL, mJoystickWheelRadius);
@@ -326,7 +320,6 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                             mJoystickPositionL.set(x, y);
                     }
                     else if (mActivePointerId == mJoystickIdR) {
-                        mJoystick = ActionListener.RIGHT;
                         isJoystickLocked = false;
                         if (mJoystickWheelRadius < distanceToRight) {
                             if (mInitJoystickPositionR.x < x)
@@ -338,8 +331,6 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                             mJoystickPositionR.set(x, mInitJoystickPositionR.y);
                     }
                 }
-                if (2 == pointerCount && INVALID_BUTTON_ID == mButtonPressedId || 2 < pointerCount)
-                    mJoystick = ActionListener.BOTH;
                 break;
             }
             
@@ -348,12 +339,10 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
             case MotionEvent.ACTION_POINTER_UP: {
                 if (mActivePointerId == mJoystickIdL) {
                     mJoystickIdL = INVALID_JOYSTICK_ID;
-                    mJoystick = ActionListener.LEFT;
                     mJoystickPositionL.set(mInitJoystickPositionL.x, mInitJoystickPositionL.y);
                 }
                 else if (mActivePointerId ==  mJoystickIdR) {
                     mJoystickIdR = INVALID_JOYSTICK_ID;
-                    mJoystick = ActionListener.RIGHT;
                     mJoystickPositionR.set(mInitJoystickPositionR.x, mInitJoystickPositionR.y);
                 }
                 else if (mActivePointerId == mButtonPressedId) {
@@ -367,12 +356,10 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
             case MotionEvent.ACTION_UP: {
                 if (mActivePointerId == mJoystickIdL) {
                     mJoystickIdL = INVALID_JOYSTICK_ID;
-                    mJoystick = ActionListener.LEFT;
                     mJoystickPositionL.set(mInitJoystickPositionL.x, mInitJoystickPositionL.y);
                 }
                 else if (mActivePointerId ==  mJoystickIdR) {
                     mJoystickIdR = INVALID_JOYSTICK_ID;
-                    mJoystick = ActionListener.RIGHT;
                     mJoystickPositionR.set(mInitJoystickPositionR.x, mInitJoystickPositionR.y);
                 }
                 else if (mActivePointerId == mButtonPressedId) {
@@ -386,26 +373,10 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
         if (null != mActionListener) {
             if (false == isJoystickLocked) {
                 Graphics.Vector v;
-                switch (mJoystick) {
-                    case ActionListener.INVALID:
-                        break;
-                    case ActionListener.LEFT:
-                        v = new Graphics.Vector(mInitJoystickPositionL, mJoystickPositionL);
-                        mActionListener.onJoystickPositionChanged(ActionListener.LEFT, v.dir() * 10000, v.mod() / mJoystickWheelRadius * 100);
-                        break;
-                    case ActionListener.RIGHT:
-                        v = new Graphics.Vector(mInitJoystickPositionR, mJoystickPositionR);
-                        mActionListener.onJoystickPositionChanged(ActionListener.RIGHT, v.dir() * 10000, v.modX() / mJoystickWheelRadius * 100);
-                        break;
-                    case ActionListener.BOTH:
-                    default:
-                        v = new Graphics.Vector(mInitJoystickPositionL, mJoystickPositionL);
-                        mActionListener.onJoystickPositionChanged(ActionListener.LEFT, v.dir() * 10000, v.mod() / mJoystickWheelRadius * 100);
-                        v = new Graphics.Vector(mInitJoystickPositionR, mJoystickPositionR);
-                        mActionListener.onJoystickPositionChanged(ActionListener.RIGHT, v.dir() * 10000, v.modX() / mJoystickWheelRadius * 100);
-                        break;
-                }
-                mJoystick = ActionListener.INVALID;
+                v = new Graphics.Vector(mInitJoystickPositionL, mJoystickPositionL);
+                mActionListener.onJoystickPositionChanged(ActionListener.LEFT, v.dir() * 10000, v.mod() / mJoystickWheelRadius * 100);
+                v = new Graphics.Vector(mInitJoystickPositionR, mJoystickPositionR);
+                mActionListener.onJoystickPositionChanged(ActionListener.RIGHT, v.dir() * 10000, v.modX() / mJoystickWheelRadius * 100);
             }
             if (ActionListener.INVALID != mButton && INVALID_BUTTON_ID == mButtonPressedId) { // Button been pressed and released now
                 mActionListener.onButtonClicked(mButton, mPowerBar);
@@ -421,7 +392,6 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
         public static final int INVALID = -1;
         public static final int LEFT = 0;
         public static final int RIGHT = 1;
-        public static final int BOTH = 2;
         public static final int SHOOTING = 0;
         public static final int DRIBBLING = 1;
         public void onJoystickPositionChanged(int joystick, float radian, float speed);

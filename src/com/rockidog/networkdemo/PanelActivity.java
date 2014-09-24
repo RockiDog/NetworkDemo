@@ -4,12 +4,8 @@ import com.rockidog.networkdemo.PanelView;
 import com.rockidog.networkdemo.PanelView.ActionListener;
 
 import android.app.Activity;
-import android.os.AsyncTask;
 import android.os.Bundle;
-
-//import java.io.OutputStream;
-//import java.lang.NullPointerException;
-//import java.net.Socket;
+import android.os.SystemClock;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -18,12 +14,20 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-public class PanelActivity extends Activity {
-    //public static Socket mSocket = null;
-    public static String mIP = null;
-    public static DatagramSocket mDatagramSocket = null;
-    public static InetAddress mLocalAddress = null;
-    public static int mPort;
+public class PanelActivity extends Activity implements Runnable {
+    private static final int TIME = 30;
+    private DatagramSocket mDatagramSocket = null;
+    private InetAddress mLocalAddress = null;
+    private int mPort = 7001;
+    private byte[] mBuffer = null;
+
+    private Thread mSocketThread = null;
+    private boolean isPaused = false;
+    private float[] mDirection = {0, 0};
+    private float[] mSpeed = {0, 0};
+    private int mButton = -1;
+    private int mPower = 0;
+    private boolean isButtonClicked = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,86 +36,94 @@ public class PanelActivity extends Activity {
         mPanelView.setActionListener(new ActionListener() {
             @Override
             public void onJoystickPositionChanged(int joystick, float radian, float speed) {
-                new SendTask().execute(Integer.toString(joystick), Integer.toString((int) radian), Integer.toString((int) speed));
+                mDirection[joystick] = radian;
+                mSpeed[joystick] = speed;
             }
             
             @Override
             public void onButtonClicked(int button, int power) {
-                new SendTask().execute(Integer.toString(button), Integer.toString(power));
+                mButton = button;
+                mPower = power;
+                isButtonClicked = true;
             }
         });
         setContentView(mPanelView);
+        
+        mSocketThread = new Thread(this);
+        mSocketThread.start();
     }
 
-    private class SendTask extends AsyncTask<String, Void, Void> {
-        @Override
-        protected Void doInBackground(String... message) {
-            String buffer = null;
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isPaused = false;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isPaused = true;
+    }
+
+    @Override
+    public void run() {
+        String buffer = null;
+        DatagramPacket data = null;
+        try {
+            mLocalAddress = InetAddress.getByName("255.255.255.255");
+            mDatagramSocket = new DatagramSocket();
+        }
+        catch (SocketException s) {
+            s.printStackTrace();
+            mDatagramSocket.close();
+        }
+        catch (UnknownHostException u) {
+            u.printStackTrace();
+            mDatagramSocket.close();
+        }
+        
+        while (false == isPaused) {
+            long startTime = SystemClock.uptimeMillis();
             
             try {
-                mLocalAddress = InetAddress.getByName("255.255.255.255");
-                mDatagramSocket = new DatagramSocket();
+                // N: Number of joystick (0: Left, 1: Right)
+                // D: Direction in angle (by 0.01 degree, [0, 36000])
+                // S: Speed of vehicle in percent ([0, 100])
+                // B: Button (0: shooting button, 1: dribbling button)
+                // P: Power in percent ([0, 100])
+                buffer = "N0" + "D" + Integer.toString((int) mDirection[0]) + "S" + Integer.toString((int) mSpeed[0]) + "#";
+                mBuffer = buffer.getBytes();
+                data = new DatagramPacket(mBuffer, buffer.length(), mLocalAddress, mPort);
+                mDatagramSocket.send(data);
+                
+                buffer = "N1" + "D" + Integer.toString((int) mDirection[1]) + "S" + Integer.toString((int) mSpeed[1]) + "#";
+                mBuffer = buffer.getBytes();
+                data = new DatagramPacket(mBuffer, buffer.length(), mLocalAddress, mPort);
+                mDatagramSocket.send(data);
+                
+                if (true == isButtonClicked) {
+                    buffer = "B" + mButton + "P" + mPower + "#";
+                    mBuffer = buffer.getBytes();
+                    data = new DatagramPacket(mBuffer, buffer.length(), mLocalAddress, mPort);
+                    mDatagramSocket.send(data);
+                    isButtonClicked = false;
+                }
             }
-            catch (SocketException s) {
-                s.printStackTrace();
-            }
-            catch (UnknownHostException u) {
-                u.printStackTrace();
-            }
-            
-            // N: Number of joystick (0: Left, 1: Right)
-            // D: Direction in angle (by 0.01 degree, [0, 36000])
-            // S: Speed of vehicle in percent ([0, 100])
-            // B: Button (0: shooting button, 1: dribbling button)
-            // P: Power in percent ([0, 100])
-            if (3 == message.length)
-                buffer = "N" + message[0] + "D" + message[1] + "S" + message[2] + "#";
-            else
-                buffer = "B" + message[0] + "P" + message[1] + "#";
-            byte[] mBuffer = buffer.getBytes();
-            mPort = 7001;
-            DatagramPacket mData = new DatagramPacket(mBuffer, buffer.length(), mLocalAddress, mPort);
-            
-            try {
-                mDatagramSocket.send(mData);
+            catch (IOException e) {
+                e.printStackTrace();
                 mDatagramSocket.close();
             }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-            /*
+            
+            long endTime = SystemClock.uptimeMillis();
+            long diffTime = endTime - startTime;
             try {
-                OutputStream mOutputStream = mSocket.getOutputStream();
-                String buffer;
-                if (3 == message.length)
-                    buffer = "N" + message[0] + "D" + message[1] + "S" + message[2] + "#";
-                else
-                    buffer = "B" + message[0] + "P" + message[1] + "#";
-                byte[] mBuffer = buffer.getBytes();
-                mOutputStream.write(mBuffer);
-                mOutputStream.flush();
+                if (TIME > diffTime)
+                    Thread.sleep(TIME - diffTime);
             }
-            catch (IOException e) {
+            catch(InterruptedException e) {
                 e.printStackTrace();
-                try {
-                    mSocket = new Socket(mIP, 7000);
-                }
-                catch (IOException s) {
-                    s.printStackTrace();
-                }
+                mDatagramSocket.close();
             }
-            catch (NullPointerException e) {
-                e.printStackTrace();
-                try {
-                    mSocket = new Socket(mIP, 7000);
-                }
-                catch (IOException socketException) {
-                    e.printStackTrace();
-                }
-            }
-            return null;
-            */
         }
     }
 }
