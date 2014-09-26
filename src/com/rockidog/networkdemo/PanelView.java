@@ -378,6 +378,7 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                 v = new Graphics.Vector(mInitJoystickPositionR, mJoystickPositionR);
                 mActionListener.onJoystickPositionChanged(ActionListener.RIGHT, v.dir() * 10000, v.modX() / mJoystickWheelRadius * 100);
             }
+            
             if (ActionListener.INVALID != mButton && INVALID_BUTTON_ID == mButtonPressedId) { // Button been pressed and released now
                 mActionListener.onButtonClicked(mButton, mPowerBar);
                 mButton = ActionListener.INVALID;
@@ -389,7 +390,7 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
     }
 
     public interface ActionListener {
-        public static final int INVALID = -1;
+        public static final int INVALID = 2;
         public static final int LEFT = 0;
         public static final int RIGHT = 1;
         public static final int SHOOTING = 0;

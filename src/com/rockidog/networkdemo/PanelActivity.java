@@ -17,7 +17,7 @@ import java.net.UnknownHostException;
 public class PanelActivity extends Activity implements Runnable {
     private static final int TIME = 30;
     private DatagramSocket mDatagramSocket = null;
-    private InetAddress mLocalAddress = null;
+    private InetAddress mBroadcastAddress = null;
     private int mPort = 7001;
     private byte[] mBuffer = null;
 
@@ -25,7 +25,7 @@ public class PanelActivity extends Activity implements Runnable {
     private boolean isPaused = false;
     private float[] mDirection = {0, 0};
     private float[] mSpeed = {0, 0};
-    private int mButton = -1;
+    private int mButton = ActionListener.INVALID;
     private int mPower = 0;
     private boolean isButtonClicked = false;
 
@@ -42,9 +42,10 @@ public class PanelActivity extends Activity implements Runnable {
             
             @Override
             public void onButtonClicked(int button, int power) {
+                isButtonClicked = true;
                 mButton = button;
                 mPower = power;
-                isButtonClicked = true;
+                isButtonClicked = false;
             }
         });
         setContentView(mPanelView);
@@ -70,7 +71,7 @@ public class PanelActivity extends Activity implements Runnable {
         String buffer = null;
         DatagramPacket data = null;
         try {
-            mLocalAddress = InetAddress.getByName("255.255.255.255");
+            mBroadcastAddress = InetAddress.getByName("255.255.255.255");
             mDatagramSocket = new DatagramSocket();
         }
         catch (SocketException s) {
@@ -86,27 +87,20 @@ public class PanelActivity extends Activity implements Runnable {
             long startTime = SystemClock.uptimeMillis();
             
             try {
-                // N: Number of joystick (0: Left, 1: Right)
+                // L: Left joystick
+                // R: Right joystick
                 // D: Direction in angle (by 0.01 degree, [0, 36000])
                 // S: Speed of vehicle in percent ([0, 100])
-                // B: Button (0: shooting button, 1: dribbling button)
+                // B: Button (0: shooting button, 1: dribbling button, 2: invalid button)
                 // P: Power in percent ([0, 100])
-                buffer = "N0" + "D" + Integer.toString((int) mDirection[0]) + "S" + Integer.toString((int) mSpeed[0]) + "#";
+                buffer = "L" + "D" + Integer.toString((int) mDirection[0]) + "S" + Integer.toString((int) mSpeed[0]);
+                buffer += "R" + "D" + Integer.toString((int) mDirection[1]) + "S" + Integer.toString((int) mSpeed[1]);
+                buffer += "B" + Integer.toString(mButton) + "P" + Integer.toString(mPower) + "#";
                 mBuffer = buffer.getBytes();
-                data = new DatagramPacket(mBuffer, buffer.length(), mLocalAddress, mPort);
+                data = new DatagramPacket(mBuffer, mBuffer.length, mBroadcastAddress, mPort);
                 mDatagramSocket.send(data);
-                
-                buffer = "N1" + "D" + Integer.toString((int) mDirection[1]) + "S" + Integer.toString((int) mSpeed[1]) + "#";
-                mBuffer = buffer.getBytes();
-                data = new DatagramPacket(mBuffer, buffer.length(), mLocalAddress, mPort);
-                mDatagramSocket.send(data);
-                
-                if (true == isButtonClicked) {
-                    buffer = "B" + mButton + "P" + mPower + "#";
-                    mBuffer = buffer.getBytes();
-                    data = new DatagramPacket(mBuffer, buffer.length(), mLocalAddress, mPort);
-                    mDatagramSocket.send(data);
-                    isButtonClicked = false;
+                if (false == isButtonClicked) {
+                    mButton = ActionListener.INVALID;
                 }
             }
             catch (IOException e) {
