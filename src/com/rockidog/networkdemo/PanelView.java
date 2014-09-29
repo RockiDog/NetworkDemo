@@ -128,9 +128,8 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                     mCanvas.drawCircle(mShootingButtonPosition.x, mShootingButtonPosition.y, mButtonRadius, mPaint);
                 }
                 
-                // Draw the power bar
-                if (INVALID_BUTTON_ID != mButtonPressedId) { // Button being pressed
-                    if (ActionListener.INVALID != mButton) { // mPowerBar locked to this thread til mButton assigned
+                if (INVALID_BUTTON_ID != mButtonPressedId) { // Draw the power bar
+                    if (ActionListener.SHOOTING == mButton) { // Button being pressed, mPowerBar locked to this thread til mButton assigned
                         mButtonPressedTime = SystemClock.uptimeMillis() - mButtonDownTime;
                         if (LONG_PRESSED_TIME_THRESHOLD > mButtonPressedTime)
                             mPowerBar = 100; // Power being full
@@ -139,25 +138,25 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                             if (99 == mPowerBar || 0 == mPowerBar)
                                 mPowerBarStep = -mPowerBarStep;
                         }
-                    }
-                    if (100 != mPowerBar) {
-                        // Draw the bar background
-                        mPaint.setColor(Color.BLACK);
-                        mPaint.setMaskFilter(null);
-                        mCanvas.drawRect(mInitJoystickPositionL.x - 1,
-                                            mInitJoystickPositionR.y / 5 * 1 - 1,
-                                            mInitJoystickPositionR.x + 1,
-                                            mInitJoystickPositionR.y / 5 * 2 + 1,
-                                            mPaint);
-                        
-                        // Draw the bar foreground
-                        mPaint.setColor(Color.RED);
-                        mPaint.setMaskFilter(mBlur);
-                        mCanvas.drawRect(mInitJoystickPositionL.x,
-                                            mInitJoystickPositionR.y / 5 * 1,
-                                            mInitJoystickPositionL.x + (mInitJoystickPositionR.x - mInitJoystickPositionL.x) * mPowerBar / 100.0f,
-                                            mInitJoystickPositionR.y / 5 * 2,
-                                            mPaint);
+                        if (100 != mPowerBar) {
+                            // Draw the bar background
+                            mPaint.setColor(Color.BLACK);
+                            mPaint.setMaskFilter(null);
+                            mCanvas.drawRect(mInitJoystickPositionL.x - 1,
+                                                mInitJoystickPositionR.y / 5 * 1 - 1,
+                                                mInitJoystickPositionR.x + 1,
+                                                mInitJoystickPositionR.y / 5 * 2 + 1,
+                                                mPaint);
+                            
+                            // Draw the bar foreground
+                            mPaint.setColor(Color.RED);
+                            mPaint.setMaskFilter(mBlur);
+                            mCanvas.drawRect(mInitJoystickPositionL.x,
+                                                mInitJoystickPositionR.y / 5 * 1,
+                                                mInitJoystickPositionL.x + (mInitJoystickPositionR.x - mInitJoystickPositionL.x) * mPowerBar / 100.0f,
+                                                mInitJoystickPositionR.y / 5 * 2,
+                                                mPaint);
+                        }
                     }
                 }
                 
@@ -252,9 +251,11 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                 }
                 else if (mButtonRadius >= distanceToDribblingButton) {
                     mButtonPressedId = mActivePointerId;
+                    /*
                     mPowerBar = 0;
                     mPowerBarStep = 3;
                     mButtonDownTime = SystemClock.uptimeMillis();
+                    */
                     mButton = ActionListener.DRIBBLING;
                 }
                 break;
@@ -291,9 +292,11 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                 }
                 else if (mButtonRadius >= distanceToDribblingButton) {
                     mButtonPressedId = mActivePointerId;
+                    /*
                     mPowerBar = 0;
                     mPowerBarStep = 3;
                     mButtonDownTime = SystemClock.uptimeMillis();
+                    */
                     mButton = ActionListener.DRIBBLING;
                 }
                 break;
@@ -380,9 +383,29 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
                 mActionListener.onJoystickPositionChanged(ActionListener.RIGHT, v.dir() * 10000, v.modX() / mJoystickWheelRadius * 100);
             }
             
-            if (ActionListener.INVALID != mButton && INVALID_BUTTON_ID == mButtonPressedId) { // Button been pressed and released now
-                mActionListener.onButtonClicked(mButton, mPowerBar);
+            /*
+            if (ActionListener.SHOOTING == mButton && INVALID_BUTTON_ID == mButtonPressedId) { // Shooting button been pressed and released now
+                if (ActionListener.SHOOTING == mButton)
+                    mActionListener.onButtonClicked(mButton, mPowerBar);
                 mButton = ActionListener.INVALID;
+            }
+            else if (ActionListener.DRIBBLING == mButton) { // Dribbling button being pressed
+                mActionListener.onButtonClicked(mButton);
+                if (INVALID_BUTTON_ID == mButtonPressedId) // Dribbling button been pressed and released now
+                    mButton = ActionListener.INVALID;
+            }
+            */
+            
+            if (ActionListener.SHOOTING == mButton) { // Shooting button being pressed
+                if (INVALID_BUTTON_ID == mButtonPressedId) { // Shooting button been pressed and released now
+                    mActionListener.onButtonClicked(mButton, mPowerBar);
+                    mButton = ActionListener.INVALID;
+                }
+            }
+            else if (ActionListener.DRIBBLING == mButton) { // Dribbling button being pressed
+                if (INVALID_BUTTON_ID == mButtonPressedId) // Dribbling button been pressed and released now
+                    mButton = ActionListener.INVALID;
+                mActionListener.onButtonClicked(mButton);
             }
         }
         
@@ -392,12 +415,7 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        return true;
-    }
-
-    @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
-        return true;
+        return mActionListener.onVolunmKeyDown(keyCode, event);
     }
 
     public interface ActionListener {
@@ -407,7 +425,8 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
         public static final int SHOOTING = 0;
         public static final int DRIBBLING = 1;
         public void onJoystickPositionChanged(int joystick, float radian, float speed);
+        public void onButtonClicked(int button);
         public void onButtonClicked(int button, int power);
-        public void onVolunmKeyDown(int keyCode, KeyEvent event);
+        public boolean onVolunmKeyDown(int keyCode, KeyEvent event);
     }
 }

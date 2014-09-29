@@ -4,9 +4,11 @@ import com.rockidog.networkdemo.PanelView;
 import com.rockidog.networkdemo.PanelView.ActionListener;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.KeyEvent;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -28,8 +30,8 @@ public class PanelActivity extends Activity implements Runnable {
     private float[] mSpeed = {0, 0};
     private int mButton = ActionListener.INVALID;
     private int mPower = 0;
+    private int mDribbleLevel = 0;
     private boolean isButtonClicked = false;
-    private int dribbleLevel = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +45,14 @@ public class PanelActivity extends Activity implements Runnable {
             }
             
             @Override
+            public void onButtonClicked(int button) {
+                //isButtonClicked = true;
+                mButton = button;
+                mPower = mDribbleLevel;
+                //isButtonClicked = false;
+            }
+            
+            @Override
             public void onButtonClicked(int button, int power) {
                 isButtonClicked = true;
                 mButton = button;
@@ -51,8 +61,33 @@ public class PanelActivity extends Activity implements Runnable {
             }
             
             @Override
-            public void onVolunmKeyDown(int keyCode, KeyEvent event) {
-                if ()
+            public boolean onVolunmKeyDown(int keyCode, KeyEvent event) {
+                if (KeyEvent.KEYCODE_VOLUME_UP == keyCode) {
+                    if (2 == mDribbleLevel)
+                        mDribbleLevel = 0;
+                    else
+                        ++mDribbleLevel;
+                }
+                else if (KeyEvent.KEYCODE_VOLUME_DOWN == keyCode) {
+                    if (0 == mDribbleLevel)
+                        mDribbleLevel = 2;
+                    else
+                        --mDribbleLevel;
+                }
+                /*
+                else if (KeyEvent.KEYCODE_SETTINGS == keyCode) {
+                    if (false == isPaused)
+                        isPaused = true;
+                    else
+                        isPaused = false;
+                }
+                */
+                else
+                    return false;
+                Context context = getApplicationContext();
+                String message = new String("吸球力度是：") + Integer.toString(mDribbleLevel);
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+                return true;
             }
         });
         setContentView(mPanelView);
@@ -106,9 +141,8 @@ public class PanelActivity extends Activity implements Runnable {
                 mBuffer = buffer.getBytes();
                 data = new DatagramPacket(mBuffer, mBuffer.length, mBroadcastAddress, mPort);
                 mDatagramSocket.send(data);
-                if (false == isButtonClicked) {
+                if (false == isButtonClicked && ActionListener.SHOOTING == mButton)
                     mButton = ActionListener.INVALID;
-                }
             }
             catch (IOException e) {
                 e.printStackTrace();
