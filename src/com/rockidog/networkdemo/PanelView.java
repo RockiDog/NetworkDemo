@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.*;
 import android.os.SystemClock;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
@@ -389,6 +390,16 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
         return true;
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        return true;
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        return true;
+    }
+
     public interface ActionListener {
         public static final int INVALID = 2;
         public static final int LEFT = 0;
@@ -397,5 +408,6 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
         public static final int DRIBBLING = 1;
         public void onJoystickPositionChanged(int joystick, float radian, float speed);
         public void onButtonClicked(int button, int power);
+        public void onVolunmKeyDown(int keyCode, KeyEvent event);
     }
 }

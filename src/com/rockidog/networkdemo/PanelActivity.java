@@ -6,6 +6,7 @@ import com.rockidog.networkdemo.PanelView.ActionListener;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.view.KeyEvent;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -28,6 +29,7 @@ public class PanelActivity extends Activity implements Runnable {
     private int mButton = ActionListener.INVALID;
     private int mPower = 0;
     private boolean isButtonClicked = false;
+    private int dribbleLevel = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +48,11 @@ public class PanelActivity extends Activity implements Runnable {
                 mButton = button;
                 mPower = power;
                 isButtonClicked = false;
+            }
+            
+            @Override
+            public void onVolunmKeyDown(int keyCode, KeyEvent event) {
+                if ()
             }
         });
         setContentView(mPanelView);
