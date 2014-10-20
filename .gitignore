@@ -11,6 +11,8 @@
 # Generated files
 bin/
 gen/
+libs/
+obj/
 
 # Gradle files
 .gradle/
@@ -31,3 +33,7 @@ proguard/
 
 # Vim Swap Files
 *.swp
+
+# YCM Configuration Files
+.ycm_extra_conf.py
+.ycm_extra_conf.pyc
