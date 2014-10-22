@@ -2,10 +2,17 @@
 <resources>
 
     <string name="app_name">机器人遥控器</string>
+<!--
     <string name="button_connect">连接</string>
     <string name="button_send">发送</string>
     <string name="button_start">开始</string>
     <string name="title_activity_panel">控制面板</string>
     <string name="init_ip">192.168.2.102</string>
+-->
+
+    <string name="button_panel">进入控制面板</string>
+    <string name="button_detector">进入人脸检测</string>
+    <string name="title_activity_panel">控制面板</string>
+    <string name="title_activity_detector">人脸检测</string>
 
 </resources>
