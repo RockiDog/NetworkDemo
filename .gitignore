@@ -11,6 +11,8 @@
 # Generated files
 bin/
 gen/
+libs/
+obj/
 
 # Gradle files
 .gradle/
@@ -23,11 +25,16 @@ local.properties
 proguard/
 
 # Eclipse project files
-# .classpath
-# .project
+.classpath
+.project
+.cproject
 
 # Log Files
 *.log
 
 # Vim Swap Files
 *.swp
+
+# YCM Configuration Files
+.ycm_extra_conf.py
+.ycm_extra_conf.pyc
