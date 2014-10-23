@@ -25,8 +25,9 @@ local.properties
 proguard/
 
 # Eclipse project files
-# .classpath
-# .project
+.classpath
+.project
+.cproject
 
 # Log Files
 *.log
