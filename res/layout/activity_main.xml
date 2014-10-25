@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
+    <!--
     <EditText
         android:id="@+id/ipText"
         android:layout_width="wrap_content"
@@ -47,14 +48,28 @@
         android:layout_toRightOf="@+id/contentText"
         android:text="@string/button_send"
         android:onClick="onSendClick" />
+    -->
 
-    <Button
-        android:id="@+id/startBtn"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:text="@string/button_start"
-        android:onClick="onStartClick" />
+        android:orientation="vertical" >
+
+        <Button
+            android:id="@+id/startDetector"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onStartDetector"
+            android:text="@string/button_detector" />
+
+        <Button
+            android:id="@+id/startPanel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onStartPanel"
+            android:text="@string/button_panel" />
+    </LinearLayout>
 
 </RelativeLayout>
