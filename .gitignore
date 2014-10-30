@@ -28,6 +28,8 @@ proguard/
 .classpath
 .project
 .cproject
+lint.xml
+.settings/
 
 # Log Files
 *.log
