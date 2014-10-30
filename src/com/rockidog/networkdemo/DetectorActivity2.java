@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase.CvCameraViewFrame;
@@ -29,12 +30,16 @@ public class DetectorActivity2 extends Activity implements CvCameraViewListener2
     private static final String TAG = "Detector2";
     private static final Scalar mRectColor = new Scalar(0, 255, 0, 255);
     private static final int mRectThickness = 3;
+    private static Rect mMaxFace;
 
+    //private boolean mFirstTracking;
     private Mat mRgbaFrame;
     private Mat mGrayFrame;
     private File mCascadeFile;
-    private Detector2 mNativeDetector;
+    private Detector2 mFrontalDetector;
+    private Detector2 mProfileDetector;
     private JavaCameraView mCameraView;
+
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -45,7 +50,7 @@ public class DetectorActivity2 extends Activity implements CvCameraViewListener2
                     Log.i(TAG, "Loading libCvDetector2.so...");
                     System.loadLibrary("CvDetector2");
                     try {
-                        InputStream is = getResources().openRawResource(R.raw.haarcascade_profileface);
+                        InputStream is = getResources().openRawResource(R.raw.lbpcascade_frontalface);
                         File cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
                         mCascadeFile = new File(cascadeDir, "classifier.xml");
                         FileOutputStream os = new FileOutputStream(mCascadeFile);
@@ -55,7 +60,18 @@ public class DetectorActivity2 extends Activity implements CvCameraViewListener2
                             os.write(buffer, 0, bytesRead);
                         is.close();
                         os.close();
-                        mNativeDetector = new Detector2(mCascadeFile.getAbsolutePath());
+                        mFrontalDetector = new Detector2(mCascadeFile.getAbsolutePath());
+                        cascadeDir.delete();
+                        
+                        is = getResources().openRawResource(R.raw.lbpcascade_frontalface);
+                        cascadeDir = getDir("cascade", Context.MODE_PRIVATE);
+                        mCascadeFile = new File(cascadeDir, "classifier.xml");
+                        os = new FileOutputStream(mCascadeFile);
+                        while (-1 != (bytesRead = is.read(buffer)))
+                            os.write(buffer, 0, bytesRead);
+                        is.close();
+                        os.close();
+                        mProfileDetector = new Detector2(mCascadeFile.getAbsolutePath());
                         cascadeDir.delete();
                     } catch (IOException e) {
                         Log.e(TAG, "Cascade file exception");
@@ -91,6 +107,7 @@ public class DetectorActivity2 extends Activity implements CvCameraViewListener2
             Log.i(TAG, "Disable camera view");
             mCameraView.disableView();
         }
+        mMaxFace = null;
     }
 
     @Override
@@ -102,6 +119,7 @@ public class DetectorActivity2 extends Activity implements CvCameraViewListener2
             Log.e(TAG, "Fail to initialize OpenCV");
         else
             Log.i(TAG, "OpenCV initialized");
+        //mFirstTracking = true;
     }
 
     @Override
@@ -128,13 +146,27 @@ public class DetectorActivity2 extends Activity implements CvCameraViewListener2
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
         mRgbaFrame = inputFrame.rgba();
         mGrayFrame = inputFrame.gray();
-        MatOfRect faces = new MatOfRect();
-        if (null != mNativeDetector)
-            mNativeDetector.Detect(mGrayFrame, faces);
-        Rect[] facesArray = faces.toArray();
-        Log.w(TAG, Integer.toString(facesArray.length));
-        for (int i = 0; i < facesArray.length; i++)
-            Core.rectangle(mRgbaFrame, facesArray[i].tl(), facesArray[i].br(), mRectColor, mRectThickness);
+        MatOfRect frontal = new MatOfRect();
+        MatOfRect profile = new MatOfRect();
+        if (null != mFrontalDetector)
+            mFrontalDetector.Detect(mGrayFrame, frontal);
+        if (null != mProfileDetector)
+            mProfileDetector.Detect(mGrayFrame, profile);
+        //if (true == mFirstTracking) {
+        ArrayList<Rect> facesArray = new ArrayList<Rect>(frontal.toList());
+        facesArray.addAll(profile.toList());
+        if (0 != facesArray.size()) {
+            mMaxFace = facesArray.get(0);
+            for (Rect face: facesArray)
+                if (mMaxFace.width * mMaxFace.height < face.width * face.height)
+                    mMaxFace = face;
+        //        mFirstTracking = false;
+        }
+        //}
+        if (null != mMaxFace) {
+            Core.rectangle(mRgbaFrame, mMaxFace.tl(), mMaxFace.br(), mRectColor, mRectThickness);
+            Core.putText(mRgbaFrame, mMaxFace.tl().toString(),  mMaxFace.tl(), Core.FONT_HERSHEY_PLAIN, 2.5, mRectColor, mRectThickness);
+        }
         return mRgbaFrame;
     }
 }
