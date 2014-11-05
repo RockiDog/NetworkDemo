@@ -4,17 +4,17 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
 
 import java.net.Socket;
 
 public class MainActivity extends Activity {
-    public static Socket mSocket = null;
-    public static String mIP = null;
+    public static Socket mSocket;
+    //public static String mIP;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //mIP = getString(R.string.init_ip);
         setContentView(R.layout.activity_main);
     }
 
@@ -34,11 +34,15 @@ public class MainActivity extends Activity {
 
     public void onStartPanel(View view) {
         Intent intent = new Intent(this, PanelActivity.class);
+        EditText ipText = (EditText) findViewById(R.id.ipText);
+        PanelActivity.mIP = ipText.getText().toString();
         startActivity(intent);
     }
 
     public void onStartDetector(View view) {
         Intent intent = new Intent(this, DetectorActivity2.class);
+        EditText ipText = (EditText) findViewById(R.id.ipText);
+        DetectorActivity2.mIP = ipText.getText().toString();
         startActivity(intent);
     }
 

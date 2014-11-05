@@ -14,6 +14,7 @@
     <string name="button_detector">进入人脸检测</string>
     <string name="title_activity_panel">控制面板</string>
     <string name="title_activity_detector">人脸检测</string>
+    <string name="init_ip">255.255.255.255</string>
 
 </resources>
 

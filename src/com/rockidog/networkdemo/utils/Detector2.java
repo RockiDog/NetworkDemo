@@ -3,8 +3,7 @@ package com.rockidog.networkdemo.utils;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfRect;
 
-public class Detector2
-{
+public class Detector2 {
     private long mNativeClassifier = 0;
 
     public Detector2(String cascadeName) { mNativeClassifier = nativeCreate(cascadeName); }
