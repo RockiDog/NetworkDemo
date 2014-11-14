@@ -19,7 +19,9 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.view.KeyEvent;
 import android.view.WindowManager;
+import android.widget.Toast;
 import android.util.Log;
 
 import java.io.File;
@@ -32,22 +34,34 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import static java.lang.Math.*;
 
 public class DetectorActivity2 extends Activity implements Runnable, CvCameraViewListener2 {
     private static final int TIME = 30;
+    private static final double ATTENUATION = 0.972588;
+    private static final double MAX_SPEED = 20;
+    private static final int LOST_TOLERANCE = 33;
     private static final String TAG = "Detector2";
-    private static final Scalar mRectColor = new Scalar(0, 255, 0, 255);
-    private static final int mRectThickness = 3;
-    private static Rect mMaxFace;
 
+    private Rect mMaxFace;
+    private Rect mThisFace;
+    private Rect mLastFace;
+    private Point mFaceCenter;
+    private Point mCenter;
+    private int mThisFaceArea;
+    private int mLastFaceArea;
+    private int mLostCycles;
+    private boolean isLost;
+
+    private int mPort = 7001;
     private DatagramSocket mDatagramSocket;
     private InetAddress mBroadcastAddress;
-    private int mPort = 7001;
     private byte[] mBuffer;
     private Thread mSocketThread;
-    private boolean isLost;
-    private boolean isPaused = false;
+    private boolean isPaused;
 
+    private Scalar mRectColor = new Scalar(0, 255, 0, 255);
+    private int mRectThickness = 3;
     private Mat mRgbaFrame;
     private Mat mGrayFrame;
     private File mCascadeFile;
@@ -55,8 +69,9 @@ public class DetectorActivity2 extends Activity implements Runnable, CvCameraVie
     private Detector2 mProfileDetector;
     private JavaCameraView mCameraView;
 
-    private Point mThisPoint;
-    private Point mCenter;
+    private double mViewWidth;
+    private long mExitTime;
+    private boolean isBackClicked;
 
     public static String mIP;
 
@@ -118,7 +133,6 @@ public class DetectorActivity2 extends Activity implements Runnable, CvCameraVie
         mCameraView.setCvCameraViewListener(this);
         mCameraView.enableFpsMeter();
         setContentView(mCameraView);
-        mCenter = new Point(640, 360);
         mSocketThread = new Thread(this);
         mSocketThread.start();
     }
@@ -142,6 +156,9 @@ public class DetectorActivity2 extends Activity implements Runnable, CvCameraVie
             Log.e(TAG, "Fail to initialize OpenCV");
         else
             Log.i(TAG, "OpenCV initialized");
+        mThisFace = null;
+        mLastFace = null;
+        isBackClicked = false;
     }
 
     @Override
@@ -153,8 +170,25 @@ public class DetectorActivity2 extends Activity implements Runnable, CvCameraVie
     }
 
     @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {  // Double click BACK to quit
+        if(KeyEvent.KEYCODE_BACK == keyCode && KeyEvent.ACTION_DOWN == event.getAction()) {
+            if((System.currentTimeMillis() - mExitTime) > 2000) {
+                Toast.makeText(getApplicationContext(), "再按一次退出人脸控制", Toast.LENGTH_SHORT).show();
+                mExitTime = System.currentTimeMillis();
+            }
+            else {
+                isBackClicked = true;
+            }
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
     public void onCameraViewStarted(int width, int height) {
         Log.i(TAG, "onCameraViewStarted");
+        mViewWidth = width;
+        mCenter = new Point(width / 2, height / 2);
         mGrayFrame = new Mat();
         mRgbaFrame = new Mat();
         isPaused = false;
@@ -170,16 +204,19 @@ public class DetectorActivity2 extends Activity implements Runnable, CvCameraVie
 
     @Override
     public Mat onCameraFrame(CvCameraViewFrame inputFrame) {
+        // Capture frame
         Core.flip(inputFrame.rgba(), mRgbaFrame, 1);
         Core.flip(inputFrame.gray(), mGrayFrame, 1);
         MatOfRect frontal = new MatOfRect();
         MatOfRect profile = new MatOfRect();
         
+        // Detect faces
         if (null != mFrontalDetector)
             mFrontalDetector.Detect(mGrayFrame, frontal);
         if (null != mProfileDetector)
             mProfileDetector.Detect(mGrayFrame, profile);
         
+        // Update max face
         ArrayList<Rect> facesArray = new ArrayList<Rect>(frontal.toList());
         facesArray.addAll(profile.toList());
         if (0 != facesArray.size()) {
@@ -188,16 +225,24 @@ public class DetectorActivity2 extends Activity implements Runnable, CvCameraVie
             for (Rect face: facesArray)
                 if (mMaxFace.width * mMaxFace.height < face.width * face.height)
                     mMaxFace = face;
+            mLastFace = mThisFace;
+            mLastFaceArea = mThisFaceArea;
+            mThisFace = mMaxFace;
+            mThisFaceArea = mMaxFace.width * mMaxFace.height;
         }
         else {
             isLost = true;
+            mThisFace = mLastFace;
+            mThisFaceArea = mLastFaceArea;
         }
         
-        if (null != mMaxFace) {
-            mThisPoint = new Point((mMaxFace.br().x + mMaxFace.tl().x) / 2, (mMaxFace.br().y + mMaxFace.tl().y) / 2);
+        mFaceCenter = mCenter;
+        if (null != mThisFace) {
+            mFaceCenter = new Point((mThisFace.br().x + mThisFace.tl().x) / 2, (mThisFace.br().y + mThisFace.tl().y) / 2);
             Core.rectangle(mRgbaFrame, mMaxFace.tl(), mMaxFace.br(), mRectColor, mRectThickness);
-            Core.putText(mRgbaFrame, mThisPoint.toString(), mThisPoint, Core.FONT_HERSHEY_PLAIN, 2, mRectColor, mRectThickness);
+            Core.putText(mRgbaFrame, mFaceCenter.toString(), mFaceCenter, Core.FONT_HERSHEY_PLAIN, 2, mRectColor, mRectThickness);
         }
+        
         return mRgbaFrame;
     }
 
@@ -216,30 +261,79 @@ public class DetectorActivity2 extends Activity implements Runnable, CvCameraVie
             mDatagramSocket.close();
         }
         
+        int[] direction = {0, 0};
+        double[] speed = {MAX_SPEED, MAX_SPEED};
         while (false == isPaused) {
             long startTime = SystemClock.uptimeMillis();
             
             try {
-                // L: Left joystick
-                // R: Right joystick
-                // D: Direction in angle (by 0.01 degree, [0, 36000])
-                // S: Speed of vehicle in percent ([0, 100])
-                // B: Button (0: shooting button, 1: dribbling button, 2: invalid button)
-                // P: Power in percent ([0, 100])
-                String buffer;
-                if (true == isLost || null == mThisPoint) {
-                    buffer = "LD0S0";
+                if (false == isBackClicked) {
+                    if (null == mFaceCenter) {
+                        mLostCycles = 0;
+                        speed[0] = 0;
+                        speed[1] = 0;
+                        direction[0] = 0;
+                        direction[1] = 0;
+                    }
+                    else if (true == isLost) {                            // Face lost
+                        ++mLostCycles;
+                        if (mLostCycles < LOST_TOLERANCE) {               // Lost time not long
+                            speed[0] *= ATTENUATION;
+                            speed[1] *= ATTENUATION;
+                        }
+                        else {                                            // Lost time too long
+                            speed[0] = 0;
+                            speed[1] = 0;
+                        }
+                    }
+                    else {                                                // Face not lost
+                        mLostCycles = 0;
+                        double k = atan((mFaceCenter.x - mCenter.x) / mViewWidth * sqrt(3) / 3) * 6 / PI;
+                        speed[1] = abs(MAX_SPEED * k);
+                        speed[0] = 0;
+                        direction[0] = 0;
+                        /*
+                        if (mThisFaceArea <= mLastFaceArea * 0.9) {       // Move forward
+                            speed[0] = MAX_SPEED;
+                            direction[0] = 0;
+                        }
+                        else if (mThisFaceArea >= mLastFaceArea * 1.1) {  // Move backward
+                            speed[0] = MAX_SPEED;
+                            direction[0] = 31415;
+                        }
+                        */
+                        if (mFaceCenter.x < mCenter.x)                    // Turn right
+                            direction[1] = 15707;
+                        else
+                            direction[1] = 47123;                         // Turn left
+                    }
+                    
+                    // L: Left joystick
+                    // R: Right joystick, not used here
+                    // D: Direction in angle (by 0.01 degree, [0, 36000])
+                    // S: Speed of vehicle in percent ([0, 100])
+                    // B: Button (0: shooting button, 1: dribbling button, 2: invalid button), not used here
+                    // P: Power in percent ([0, 100]), not used here
+                    mBuffer = ("LD" + direction[0] + "S" + (int)speed[0] + "RD" + direction[1] + "S" + (int)speed[1] + "B2P0#").getBytes();
+                    DatagramPacket data = new DatagramPacket(mBuffer, mBuffer.length, mBroadcastAddress, mPort);
+                    mDatagramSocket.send(data);
                 }
                 else {
-                    if (mThisPoint.x < mCenter.x)  // Move right
-                        buffer = "LD0S20";
-                    else                           // Move left
-                        buffer = "LD18000S20";
+                    int it = 10;
+                    while (0 != it--) {
+                        mBuffer = "LD0S0RD0S0B2P0#".getBytes();
+                        DatagramPacket data = new DatagramPacket(mBuffer, mBuffer.length, mBroadcastAddress, mPort);
+                        mDatagramSocket.send(data);
+                        try {
+                            Thread.sleep(30);
+                        }
+                        catch (InterruptedException e) {
+                            e.printStackTrace();
+                            mDatagramSocket.close();
+                        }
+                    }
+                    finish();
                 }
-                buffer += "RD0S0B2P0#";
-                mBuffer = buffer.getBytes();
-                DatagramPacket data = new DatagramPacket(mBuffer, mBuffer.length, mBroadcastAddress, mPort);
-                mDatagramSocket.send(data);
             }
             catch (IOException e) {
                 Log.e(TAG, "Exception inside runnable");
