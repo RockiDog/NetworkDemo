@@ -37,21 +37,28 @@ public class Graphics{
     public static class Vector {
         private float x;
         private float y;
-        private PointF startPoint = null;
-        private PointF endPoint = null;
+        private PointF startPoint;
+        private PointF endPoint;
         
         public Vector(PointF start, PointF end) {
             startPoint = start;
             endPoint = end;
-            x = end.x - start.x;
-            y = end.y - start.y;
+            x = endPoint.x - startPoint.x;
+            y = endPoint.y - startPoint.y;
         }
         
         public Vector(float startX, float startY, float endX, float endY) {
             startPoint = new PointF(startX, startY);
             endPoint = new PointF(endX, endY);
-            x = endX - startX;
-            y = endY - startY;
+            x = endPoint.x - startPoint.x;
+            y = endPoint.y - startPoint.y;
+        }
+        
+        public Vector(double startX, double startY, double endX, double endY) {
+            startPoint = new PointF((float)startX, (float)startY);
+            endPoint = new PointF((float)endX, (float)endY);
+            x = endPoint.x - startPoint.x;
+            y = endPoint.y - startPoint.y;
         }
         
         public Vector(float x, float y) {

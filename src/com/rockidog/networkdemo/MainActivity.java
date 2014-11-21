@@ -1,30 +1,24 @@
 package com.rockidog.networkdemo;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Toast;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 public class MainActivity extends Activity {
-    public static Socket mSocket = null;
-    public static String mIP = null;
+    public static Socket mSocket;
+    //public static String mIP;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mIP = getString(R.string.init_ip);
         setContentView(R.layout.activity_main);
     }
 
+    /*
     public void onConnectClick(View view) {
         EditText ipText = (EditText) findViewById(R.id.ipText);
         mIP = ipText.getText().toString();
@@ -36,14 +30,23 @@ public class MainActivity extends Activity {
         String content = contentText.getText().toString();
         new SendTask().execute(content);
     }
+    */
 
-    public void onStartClick(View view) {
+    public void onStartPanel(View view) {
         Intent intent = new Intent(this, PanelActivity.class);
-        //PanelActivity.mIP = MainActivity.mIP;
-        //PanelActivity.mSocket = MainActivity.mSocket;
+        EditText ipText = (EditText) findViewById(R.id.ipText);
+        PanelActivity.mIP = ipText.getText().toString();
         startActivity(intent);
     }
 
+    public void onStartDetector(View view) {
+        Intent intent = new Intent(this, DetectorActivity2.class);
+        EditText ipText = (EditText) findViewById(R.id.ipText);
+        DetectorActivity2.mIP = ipText.getText().toString();
+        startActivity(intent);
+    }
+
+    /*
     private class ConnectTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... IPs) {
@@ -92,5 +95,5 @@ public class MainActivity extends Activity {
             return null;
         }
     }
+    */
 }
-

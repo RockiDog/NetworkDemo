@@ -33,6 +33,8 @@ public class PanelActivity extends Activity implements Runnable {
     private int mDribbleLevel = 0;
     private boolean isButtonClicked = false;
 
+    public static String mIP;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -113,7 +115,7 @@ public class PanelActivity extends Activity implements Runnable {
         String buffer = null;
         DatagramPacket data = null;
         try {
-            mBroadcastAddress = InetAddress.getByName("255.255.255.255");
+            mBroadcastAddress = InetAddress.getByName(mIP);
             mDatagramSocket = new DatagramSocket();
         }
         catch (SocketException s) {
