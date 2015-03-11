@@ -81,7 +81,7 @@ public class PanelView extends SurfaceView implements Runnable, Callback {
       try {
         mCanvas.drawColor(Color.LTGRAY, PorterDuff.Mode.SRC);
         
-        // Draw the backgounds of joysticks
+        // Draw the backgrounds of joysticks
         mPaint.setColor(Color.TRANSPARENT);
         mPaint.setAlpha(30);
         mPaint.setMaskFilter(null);

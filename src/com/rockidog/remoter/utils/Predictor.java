@@ -22,8 +22,8 @@ public class Predictor {
   }
 
   public int getSize() { return mSize; }
-  public double getPredictX() { return mPredictX; }
-  public double getPredictY() { return mPredictY; }
+  public double getX() { return mPredictX; }
+  public double getY() { return mPredictY; }
 
   public void doUpdate(double x, double y) {
     mPredictX = x;
